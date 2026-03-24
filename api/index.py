@@ -72,28 +72,41 @@ def send_photo():
 
 @app.route("/number", methods=["POST"])
 def number():
-    data = request.json
-
-    chat_id = data.get("chat_id")
-    number = data.get("number")
-
     try:
-        res = requests.get(f"https://number-info-bd-tau.vercel.app/info?number={number}")
-        api = res.json()
-    except:
-        api = {"error": "API failed"}
+        data = request.get_json(force=True)
 
-    text = f"📱 PHONE SEARCH\n\nNumber: {number}\n\n{json.dumps(api, indent=2)}"
+        chat_id = data.get("chat_id")
+        number = data.get("number")
 
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        json={
-            "chat_id": chat_id,
-            "text": text
-        }
-    )
+        print("🔥 HIT /number:", number)
 
-    return jsonify({"ok": True})
+        # API CALL
+        try:
+            res = requests.get(
+                f"https://number-info-bd-tau.vercel.app/info?number={number}",
+                timeout=15
+            )
+            api = res.json()
+        except Exception as e:
+            api = {"error": str(e)}
+
+        text = f"📱 PHONE SEARCH\n\nNumber: {number}\n\n{json.dumps(api, indent=2)}"
+
+        r = requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": text
+            }
+        )
+
+        print("Telegram response:", r.text)
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        print("❌ ERROR:", e)
+        return jsonify({"error": str(e)})
 
 @app.route("/visitor", methods=["POST"])
 def visitor():
