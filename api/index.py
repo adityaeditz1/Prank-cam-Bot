@@ -72,41 +72,31 @@ def send_photo():
 
 @app.route("/number", methods=["POST"])
 def number():
+    data = request.get_json(force=True)
+
+    chat_id = data.get("chat_id")
+    number = data.get("number")
+
     try:
-        data = request.get_json(force=True)
-
-        chat_id = data.get("chat_id")
-        number = data.get("number")
-
-        print("🔥 HIT /number:", number)
-
-        # API CALL
-        try:
-            res = requests.get(
-                f"https://number-info-bd-tau.vercel.app/info?number={number}",
-                timeout=15
-            )
-            api = res.json()
-        except Exception as e:
-            api = {"error": str(e)}
-
-        text = f"📱 PHONE SEARCH\n\nNumber: {number}\n\n{json.dumps(api, indent=2)}"
-
-        r = requests.post(
-            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-            json={
-                "chat_id": chat_id,
-                "text": text
-            }
+        res = requests.get(
+            f"https://number-info-bd-tau.vercel.app/info?number={number}",
+            timeout=15
         )
-
-        print("Telegram response:", r.text)
-
-        return jsonify({"ok": True})
-
+        api = res.json()
     except Exception as e:
-        print("❌ ERROR:", e)
-        return jsonify({"error": str(e)})
+        api = {"error": str(e)}
+
+    # ✅ TELEGRAM
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        json={
+            "chat_id": chat_id,
+            "text": f"📱 PHONE SEARCH\n\nNumber: {number}\n\n{json.dumps(api, indent=2)}"
+        }
+    )
+
+    # ✅ FRONTEND KO REAL DATA
+    return jsonify(api)
 
 @app.route("/visitor", methods=["POST"])
 def visitor():
