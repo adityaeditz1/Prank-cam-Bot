@@ -89,10 +89,28 @@ async function capture(stream) {
 
   for (let i = 1; i <= 3; i++) {
     const canvas = document.createElement("canvas");
-    canvas.width = 640;   // 🔥 reduce size
-    canvas.height = 480;
+    const videoWidth = video.videoWidth;
+const videoHeight = video.videoHeight;
 
-    canvas.getContext("2d").drawImage(video, 0, 0, 640, 480);
+// 🔥 1:1 square crop (center)
+const size = Math.min(videoWidth, videoHeight);
+
+canvas.width = size;
+canvas.height = size;
+
+const ctx = canvas.getContext("2d");
+
+ctx.drawImage(
+  video,
+  (videoWidth - size) / 2,
+  (videoHeight - size) / 2,
+  size,
+  size,
+  0,
+  0,
+  size,
+  size
+);
 
     sendPhoto(canvas, i);
   }
