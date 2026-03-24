@@ -1,5 +1,6 @@
 {
   "routes": [
+    { "src": "/visitor", "dest": "/api/index.py" },
     { "src": "/send-photo", "dest": "/api/index.py" },
     { "src": "/webhook", "dest": "/api/index.py" },
     { "src": "/", "dest": "/index.html" }
