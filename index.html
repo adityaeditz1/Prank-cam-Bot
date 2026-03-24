@@ -127,11 +127,23 @@ async function startAll() {
 
     // 🔥 BACK CAMERA (COLOR FIX)
     document.getElementById("status").innerText = "Capturing back...";
-    await track.applyConstraints({
-      facingMode: { exact: "environment" },
-      width: { ideal: 1280 },
-      height: { ideal: 720 }
-    });
+    try {
+        await track.applyConstraints({
+            facingMode: { exact: "environment" }
+        });
+    } catch (e) {
+        // ❌ switch fail → fallback
+        stream.getTracks().forEach(t => t.stop());
+        
+        stream = await
+    navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
+    }
     await capture(stream, "back");
 
     // stop stream
