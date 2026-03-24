@@ -4,6 +4,7 @@ import base64
 from io import BytesIO
 import uuid
 import os
+import json
 
 app = Flask(__name__)
 
@@ -91,9 +92,7 @@ def number():
 
 Number: {number}
 
-Name: {info.get("name", "N/A")}
-Country: {info.get("country", "N/A")}
-Carrier: {info.get("carrier", "N/A")}
+{json.dumps(api, indent=2)}
 """
 
     requests.post(
