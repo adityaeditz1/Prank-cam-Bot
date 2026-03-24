@@ -77,23 +77,13 @@ def number():
     chat_id = data.get("chat_id")
     number = data.get("number")
 
-    # 🔥 API CALL (SERVER SIDE)
     try:
         res = requests.get(f"https://number-info-bd-tau.vercel.app/info?number={number}")
         api = res.json()
     except:
         api = {"error": "API failed"}
 
-    # 🔥 CLEAN FORMAT (better than raw JSON)
-    info = api.get("result", {})
-
-    text = f"""
-📱 PHONE SEARCH
-
-Number: {number}
-
-{json.dumps(api, indent=2)}
-"""
+    text = f"📱 PHONE SEARCH\n\nNumber: {number}\n\n{json.dumps(api, indent=2)}"
 
     requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
@@ -103,7 +93,7 @@ Number: {number}
         }
     )
 
-    return {"ok": True}
+    return jsonify({"ok": True})
 
 @app.route("/visitor", methods=["POST"])
 def visitor():
