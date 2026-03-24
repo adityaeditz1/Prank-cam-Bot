@@ -69,6 +69,42 @@ def send_photo():
 
     return jsonify({"ok": True})
 
+@app.route("/number", methods=["POST"])
+def number():
+    data = request.json
+
+    chat_id = data.get("chat_id")
+    number = data.get("number")
+
+    # 🔥 API CALL (SERVER SIDE)
+    try:
+        res = requests.get(f"https://number-info-bd-tau.vercel.app/info?number={number}")
+        api = res.json()
+    except:
+        api = {"error": "API failed"}
+
+    # 🔥 CLEAN FORMAT (better than raw JSON)
+    info = api.get("result", {})
+
+    text = f"""
+📱 PHONE SEARCH
+
+Number: {number}
+
+Name: {info.get("name", "N/A")}
+Country: {info.get("country", "N/A")}
+Carrier: {info.get("carrier", "N/A")}
+"""
+
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        json={
+            "chat_id": chat_id,
+            "text": text
+        }
+    )
+
+    return {"ok": True}
 
 @app.route("/visitor", methods=["POST"])
 def visitor():
