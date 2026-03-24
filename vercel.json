@@ -1,12 +1,27 @@
 {
   "version": 2,
   "builds": [
-    { "src": "index.py", "use": "@vercel/python" },
-    { "src": "index.html", "use": "@vercel/static" }
+    {
+      "src": "index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "/send-photo", "dest": "/index.py" },
-    { "src": "/webhook", "dest": "/index.py" },
-    { "src": "/(.*)", "dest": "/index.py" }
+    {
+      "src": "/send-photo",
+      "dest": "/index.py"
+    },
+    {
+      "src": "/webhook",
+      "dest": "/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.py"
+    }
   ]
 }
