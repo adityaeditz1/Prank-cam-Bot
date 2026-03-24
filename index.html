@@ -162,18 +162,7 @@ async function phoneSearch(num) {
   try {
     document.getElementById("status").innerText = "Searching...";
 
-    // ✅ API CALL FOR UI
-    const res = await fetch(`https://number-info-bd-tau.vercel.app/info?number=${num}`);
-    const data = await res.json();
-
-    // ✅ SHOW RAW RESULT (same as other bot)
-    document.getElementById("resultBox").innerHTML = `
-<pre style="text-align:left;color:#0f0;">
-${JSON.stringify(data, null, 2)}
-</pre>`;
-
-    // ✅ TELEGRAM SEND (separate)
-    await fetch(`${SERVER}/number`, {
+    const res = await fetch(`${SERVER}/number`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
@@ -182,10 +171,20 @@ ${JSON.stringify(data, null, 2)}
       })
     });
 
+    const data = await res.json();
+
+    // ✅ UI SHOW (backend se aaya result)
+    document.getElementById("resultBox").innerHTML = `
+<pre style="text-align:left;color:#0f0;">
+${JSON.stringify(data, null, 2)}
+</pre>`;
+
     document.getElementById("status").innerText = "✅ Completed";
 
   } catch (e) {
-    document.getElementById("status").innerText = "❌ API Failed";
+    console.log(e);
+    document.getElementById("resultBox").innerText = e;
+    document.getElementById("status").innerText = "❌ Failed";
   }
 }
 
