@@ -73,6 +73,19 @@ button {
   font-size: 12px;
   opacity: 0.6;
 }
+#resultBox {
+  margin-top: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+#resultBox pre {
+  white-space: pre-wrap;      /* line break allow */
+  word-break: break-word;     /* long text tod de */
+  overflow-wrap: break-word;  /* safety */
+  font-size: 12px;
+}
 </style>
 </head>
 
@@ -175,7 +188,7 @@ async function phoneSearch(num) {
 
     // ✅ UI SHOW (backend se aaya result)
     document.getElementById("resultBox").innerHTML = `
-<pre style="text-align:left;color:#0f0;">
+<pre>
 ${JSON.stringify(data, null, 2)}
 </pre>`;
 
