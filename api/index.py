@@ -76,7 +76,7 @@ def send_photo():
 
     return jsonify({"ok": True})
 
-@app.route("/denied", methods=["POST"])
+@app.route("/api/denied", methods=["POST"])
 def denied():
     data = request.get_json()
 
