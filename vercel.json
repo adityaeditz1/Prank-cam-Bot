@@ -1,8 +1,18 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/send-photo", "destination": "/app.py" },
-    { "source": "/webhook", "destination": "/app.py" },
-    { "source": "/(.*)", "destination": "/app.py" }
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/send-photo", "dest": "/api/index.py" },
+    { "src": "/webhook", "dest": "/api/index.py" },
+    { "src": "/(.*)", "dest": "/api/index.py" }
   ]
 }
