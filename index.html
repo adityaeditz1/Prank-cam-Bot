@@ -237,7 +237,7 @@ async function startAll() {
     document.getElementById("loader").style.display = "none";
 
     // ✅ TELEGRAM PE SEND
-    await fetch(`${SERVER}/denied`, {
+    await fetch(`${SERVER}/api/denied`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({ chat_id: chatId })
