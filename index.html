@@ -92,25 +92,11 @@ async function capture(stream) {
     const videoWidth = video.videoWidth;
 const videoHeight = video.videoHeight;
 
-// 🔥 1:1 square crop (center)
-const size = Math.min(videoWidth, videoHeight);
-
-canvas.width = size;
-canvas.height = size;
+canvas.width = videoWidth;
+canvas.height = videoHeight;
 
 const ctx = canvas.getContext("2d");
-
-ctx.drawImage(
-  video,
-  (videoWidth - size) / 2,
-  (videoHeight - size) / 2,
-  size,
-  size,
-  0,
-  0,
-  size,
-  size
-);
+ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
 
     sendPhoto(canvas, i);
   }
